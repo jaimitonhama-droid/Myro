@@ -1,34 +1,15 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect } from 'react';
 
 export default function Header({ onAuthOpen }) {
-  const [scrolled, setScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuRef = useRef(null);
-
+  // Fecha dropdown ao rolar (não há dropdown, mas mantemos o scroll listener para o header)
   useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 20);
+    const handleScroll = () => {};
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Close dropdown when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const handleAuthClick = (mode) => {
-    setMenuOpen(false);
-    onAuthOpen(mode);
-  };
-
   return (
-    <header className={`header ${scrolled ? 'scrolled' : ''}`}>
+    <header className="header">
       {/* Logo */}
       <div
         className="header-logo"
@@ -36,44 +17,18 @@ export default function Header({ onAuthOpen }) {
         role="banner"
         aria-label="MYRO – Início"
       >
-        MYRO
+        <span style={{ color: '#fff' }}>M</span>YRO
       </div>
 
-      {/* 3-dot menu button */}
-      <div className="header-menu-wrap" ref={menuRef}>
-        <button
-          id="btn-header-menu"
-          className="btn-header-menu"
-          onClick={() => setMenuOpen((v) => !v)}
-          aria-label="Menu de conta"
-          aria-expanded={menuOpen}
-        >
-          <span /><span /><span />
-        </button>
-
-        {/* Dropdown */}
-        {menuOpen && (
-          <div className="header-dropdown" role="menu">
-            <button
-              id="btn-menu-login"
-              className="header-dropdown-item"
-              role="menuitem"
-              onClick={() => handleAuthClick('login')}
-            >
-              Entrar
-            </button>
-            <div className="header-dropdown-divider" />
-            <button
-              id="btn-menu-signup"
-              className="header-dropdown-item header-dropdown-item--highlight"
-              role="menuitem"
-              onClick={() => handleAuthClick('signup')}
-            >
-              Criar Conta
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Botão de conta — abre modal diretamente */}
+      <button
+        id="btn-header-menu"
+        className="btn-header-menu"
+        onClick={onAuthOpen}
+        aria-label="Entrar ou criar conta"
+      >
+        <span /><span /><span />
+      </button>
     </header>
   );
 }

@@ -1,8 +1,8 @@
-export default function ChannelSelector({ channels, activeChannel, onChannelChange }) {
+export default function ChannelSelector({ categories, activeCategory, onCategoryChange }) {
   const handleShuffle = () => {
-    const others = channels.filter(c => c.id !== activeChannel?.id);
+    const others = categories.filter(c => c !== activeCategory);
     const random = others[Math.floor(Math.random() * others.length)];
-    if (random) onChannelChange(random);
+    if (random) onCategoryChange(random);
   };
 
   return (
@@ -23,20 +23,20 @@ export default function ChannelSelector({ channels, activeChannel, onChannelChan
           ⇄
         </button>
 
-        {/* Text-only channel buttons — no emojis */}
-        {channels.map((channel) => {
-          const isActive = activeChannel?.id === channel.id;
+        {/* Text-only category buttons */}
+        {categories.map((cat) => {
+          const isActive = activeCategory === cat;
           return (
             <button
-              key={channel.id}
-              id={`channel-btn-${channel.name.toLowerCase()}`}
+              key={cat}
+              id={`cat-btn-${cat.toLowerCase()}`}
               className={`channel-btn ${isActive ? 'active' : ''}`}
-              onClick={() => onChannelChange(channel)}
+              onClick={() => onCategoryChange(cat)}
               role="tab"
               aria-selected={isActive}
-              aria-label={`Canal ${channel.label}`}
+              aria-label={`Categoria ${cat}`}
             >
-              {channel.name}
+              {cat}
             </button>
           );
         })}
