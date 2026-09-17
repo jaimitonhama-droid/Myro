@@ -89,6 +89,10 @@ export default function App() {
     setShowCheckout(false);
   }, []);
 
+  const handleToggleMute = useCallback(() => {
+    setIsMuted(prev => !prev);
+  }, []);
+
   return (
     <div className="app-container">
       {/* Splash Screen — aparece na primeira abertura */}
@@ -127,7 +131,7 @@ export default function App() {
               <VideoPlayer 
                 channel={activeChannel}
                 isMuted={isMuted}
-                onToggleMute={useCallback(() => setIsMuted(prev => !prev), [])}
+                onToggleMute={handleToggleMute}
                 playlistIndex={playlistIndex}
               />
 
