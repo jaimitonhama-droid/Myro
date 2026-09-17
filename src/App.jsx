@@ -136,24 +136,29 @@ export default function App() {
               />
 
               {activeChannel?.youtubeListId && (
-                <button 
-                  className="btn-toggle-playlist"
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsDrawerOpen(!isDrawerOpen); }}
-                >
-                  ☰ {isDrawerOpen ? 'Fechar Lista' : 'Lista de Episódios'}
-                </button>
-              )}
-
-              {activeChannel?.youtubeListId && (
                 <PlaylistDrawer
                   playlistId={activeChannel?.youtubeListId}
                   isOpen={isDrawerOpen}
                   onClose={() => setIsDrawerOpen(false)}
                   currentIndex={playlistIndex}
-                  onSelect={(idx) => setPlaylistIndex(idx)}
+                  onSelect={(idx) => {
+                    setPlaylistIndex(idx);
+                    if (window.innerWidth <= 900) {
+                      setIsDrawerOpen(false);
+                    }
+                  }}
                 />
               )}
             </div>
+
+            {activeChannel?.youtubeListId && (
+              <button 
+                className="btn-toggle-playlist"
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsDrawerOpen(!isDrawerOpen); }}
+              >
+                ☰ {isDrawerOpen ? 'Fechar Lista' : 'Lista de Episódios'}
+              </button>
+            )}
           </div>
 
           <div className="content-container">
