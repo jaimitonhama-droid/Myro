@@ -12,24 +12,27 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
-const NOVO_CANAL = { 
-  name: 'AnimaKids', 
-  label: 'Kids TV 2', 
-  emoji: '🧩', 
-  category: 'Infantil',
-  description: 'Diversão garantida para os mais pequenos.', 
-  youtubeId: 'L3o5yg773RE', 
-  url: '', 
-  accentColor: '#f59e0b', 
-  active: true,
-  thumbnail: 'https://images.unsplash.com/photo-1471286174890-9c112ffca5b4?w=800&q=80'
-};
+const CANAIS = [
+  { 
+    name: 'Música Mix 3', 
+    label: 'Mix 3', 
+    emoji: '🎧', 
+    category: 'Músicas',
+    description: 'Som de alta qualidade ao vivo.', 
+    youtubeId: 'O1TcEbDxhk8', 
+    url: '', 
+    accentColor: '#3b82f6', 
+    active: true,
+    thumbnail: 'https://img.youtube.com/vi/O1TcEbDxhk8/maxresdefault.jpg'
+  }
+];
 
 async function seed() {
-  console.log("A adicionar o segundo canal do YouTube (L3o5yg773RE) à categoria Infantil...");
-  await addDoc(collection(db, 'channels'), NOVO_CANAL);
-  console.log("Canal adicionado com sucesso!");
+  console.log("A adicionar canais de música...");
+  for (const canal of CANAIS) {
+    await addDoc(collection(db, 'channels'), canal);
+  }
+  console.log("Canais adicionados com sucesso!");
   process.exit(0);
 }
 seed().catch(console.error);

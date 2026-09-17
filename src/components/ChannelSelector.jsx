@@ -1,4 +1,6 @@
-export default function ChannelSelector({ categories, activeCategory, onCategoryChange }) {
+import { memo } from 'react';
+
+const ChannelSelector = ({ categories, activeCategory, onCategoryChange }) => {
   const handleShuffle = () => {
     const others = categories.filter(c => c !== activeCategory);
     const random = others[Math.floor(Math.random() * others.length)];
@@ -43,4 +45,6 @@ export default function ChannelSelector({ categories, activeCategory, onCategory
       </div>
     </section>
   );
-}
+};
+
+export default memo(ChannelSelector);

@@ -1,4 +1,6 @@
-export default function ThumbnailRow({ channels, activeChannel, onChannelChange }) {
+import { memo } from 'react';
+
+const ThumbnailRow = ({ channels, activeChannel, onChannelChange }) => {
   const items = channels || [];
   const label = items.length > 0 ? `A Passar em ${items[0]?.category || ''}` : '';
 
@@ -19,8 +21,24 @@ export default function ThumbnailRow({ channels, activeChannel, onChannelChange 
               title={item.name}
               style={{ border: isActive ? `2px solid ${item.accentColor || '#e50914'}` : '2px solid transparent' }}
             >
-              <img src={item.thumbnail} alt={item.name} loading="lazy" />
-              <span className="thumbnail-live">AO VIVO</span>
+              { item.isOffline && <span className="thumbnail-offline">OFFLINE</span> }
+              { item.youtubeId && !item.youtubeListId ? (
+                <img 
+                  src={`https://img.youtube.com/vi/${item.youtubeId}/hqdefault.jpg`} 
+                  alt={item.name} 
+                  loading="lazy"
+                />
+              ) : item.thumbnail ? (
+                <img 
+                  src={item.thumbnail} 
+                  alt={item.name} 
+                  loading="lazy"
+                />
+              ) : (
+                <div className="thumbnail-placeholder">MYRO</div>
+              )}
+              { (!item.isOffline && !item.youtubeListId && !item.duration) && <span className="thumbnail-live">AO VIVO</span> }
+              { item.duration && <span className="thumbnail-duration">{item.duration}</span> }
               <div className="thumbnail-overlay">
                 <div className="thumbnail-play">{isActive ? '▶ A TOCAR' : '▶'}</div>
               </div>
@@ -34,4 +52,6 @@ export default function ThumbnailRow({ channels, activeChannel, onChannelChange 
       </div>
     </section>
   );
-}
+};
+
+export default memo(ThumbnailRow);

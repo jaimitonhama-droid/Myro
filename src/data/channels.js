@@ -29,8 +29,9 @@ export const channels = [
     name: "Músicas",
     label: "Músicas 24h",
     emoji: "🎵",
-    description: "Funk, Sertanejo, Kizomba e Afro House ao vivo 24 horas",
-    url: "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8", // placeholder - substitua pelo link real
+    description: "Playlist personalizada de músicas",
+    youtubeId: "2nhwI9npcv8",
+    youtubeListId: "RD2nhwI9npcv8",
     gradient: "from-green-900 to-teal-900",
     accentColor: "#22c55e",
     thumbnail: "https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&q=80",
