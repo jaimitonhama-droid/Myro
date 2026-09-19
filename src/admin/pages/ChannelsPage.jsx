@@ -338,6 +338,8 @@ export default function ChannelsPage() {
                   <option value="Músicas">Músicas</option>
                   <option value="Infantil">Infantil</option>
                   <option value="Amapiano">Amapiano</option>
+                  <option value="VEVO">VEVO</option>
+                  <option value="Phonk">Phonk</option>
                 </select>
               </div>
               <div className="adm-settings-field">
@@ -425,6 +427,8 @@ export default function ChannelsPage() {
                   <option value="Músicas">Músicas</option>
                   <option value="Infantil">Infantil</option>
                   <option value="Amapiano">Amapiano</option>
+                  <option value="VEVO">VEVO</option>
+                  <option value="Phonk">Phonk</option>
                 </select>
               </div>
               <div className="adm-settings-field">

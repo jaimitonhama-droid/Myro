@@ -1,14 +1,26 @@
-import { memo } from 'react';
+import { memo, useState, useEffect } from 'react';
 
-const ThumbnailRow = ({ channels, activeChannel, onChannelChange }) => {
+const ThumbnailRow = ({ channels, activeChannel, onChannelChange, activeCategory }) => {
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
   const items = channels || [];
+
+  // Reset pagination when category changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeCategory]);
+
+  const totalPages = Math.ceil(items.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const visibleItems = items.slice(startIndex, startIndex + itemsPerPage);
+
   const label = items.length > 0 ? `A Passar em ${items[0]?.category || ''}` : '';
 
   return (
     <section className="thumbnails-section" aria-label="Conteúdos em destaque">
       <h2 className="thumbnails-label">{label}</h2>
       <div className="thumbnails-row">
-        {items.map((item) => {
+        {visibleItems.map((item) => {
           const isActive = activeChannel?.fbId === item.fbId;
           return (
             <div
@@ -50,6 +62,30 @@ const ThumbnailRow = ({ channels, activeChannel, onChannelChange }) => {
           );
         })}
       </div>
+
+      {totalPages > 1 && (
+        <div className="pagination-controls">
+          <button 
+            className="pagination-btn" 
+            disabled={currentPage === 1}
+            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+          >
+            &laquo; Anterior
+          </button>
+          
+          <span className="pagination-info">
+            Página {currentPage} de {totalPages}
+          </span>
+          
+          <button 
+            className="pagination-btn" 
+            disabled={currentPage === totalPages}
+            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+          >
+            Próxima &raquo;
+          </button>
+        </div>
+      )}
     </section>
   );
 };

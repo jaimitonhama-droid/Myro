@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, memo } from 'react';
 import Hls from 'hls.js';
 
-const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0 }) => {
+const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnded }) => {
   const videoRef        = useRef(null);
   const hlsRef          = useRef(null);
   const ytPlayerRef     = useRef(null);
@@ -12,7 +12,9 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0 }) => {
   const [isPaused,      setIsPaused]      = useState(false);
   const [showControl,   setShowControl]   = useState(false);
   const [showMute,      setShowMute]      = useState(false);
+  const [isInteracting, setIsInteracting] = useState(false);
   const muteTimer       = useRef(null);
+  const interactionTimer = useRef(null);
 
   // Estados da Barra de Progresso
   const [progress,      setProgress]      = useState(0);
@@ -22,6 +24,30 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0 }) => {
   const [isFullscreen,  setIsFullscreen]  = useState(false);
   
   const playerWrapperRef = useRef(null);
+  const lastReportTime   = useRef(0);
+
+  const reportErrorToAdmin = (errorType, errorCode) => {
+    const now = Date.now();
+    // Prevenção de Spam (Throttling): Apenas envia 1 alerta a cada 60 segundos por sessão
+    if (now - lastReportTime.current < 60000) return;
+    lastReportTime.current = now;
+
+    fetch('/api/report-error', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        videoName: channel?.name || 'Canal Desconhecido',
+        errorType,
+        errorCode
+      })
+    }).catch(err => console.error("Falha ao contactar servidor de alertas:", err));
+  };
+
+  const handleUserInteraction = () => {
+    setIsInteracting(true);
+    if (interactionTimer.current) clearTimeout(interactionTimer.current);
+    interactionTimer.current = setTimeout(() => setIsInteracting(false), 3000);
+  };
 
   // Inicialização do Player
   useEffect(() => {
@@ -64,6 +90,15 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0 }) => {
                 setIsLoading(true);
               } else if (e.data === window.YT.PlayerState.PAUSED) {
                 setIsPaused(true);
+              } else if (e.data === window.YT.PlayerState.ENDED) {
+                if (onEnded) onEnded();
+              }
+            },
+            onError: (e) => {
+              // 100: Removido/Privado | 101/150: Bloqueado por direitos autorais para sites externos
+              if (e.data === 100 || e.data === 101 || e.data === 150) {
+                reportErrorToAdmin("YouTube Bloqueado/Removido", e.data);
+                if (onEnded) onEnded();
               }
             }
           }
@@ -91,7 +126,13 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0 }) => {
           hls.loadSource(src);
           hls.attachMedia(video);
           hls.on(Hls.Events.MANIFEST_PARSED, () => video.play().catch(() => {}));
-          hls.on(Hls.Events.ERROR, (_, data) => { if (data.fatal) console.warn('HLS error:', data.type); });
+          hls.on(Hls.Events.ERROR, (_, data) => { 
+            if (data.fatal) { 
+              console.warn('HLS error:', data.type); 
+              reportErrorToAdmin("Falha Crítica no Servidor HLS", data.type);
+              if (onEnded) onEnded();
+            } 
+          });
         } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
           video.src = src;
           video.play().catch(() => {});
@@ -103,15 +144,18 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0 }) => {
       const onCanPlay = () => { setIsLoading(false); setTimeout(() => setShowThumbnail(false), 400); };
       const onWaiting = () => setIsLoading(true);
       const onPlaying = () => setIsLoading(false);
+      const onVideoEnded = () => { if (onEnded) onEnded(); };
 
       video.addEventListener('canplay',  onCanPlay);
       video.addEventListener('waiting',  onWaiting);
       video.addEventListener('playing',  onPlaying);
+      video.addEventListener('ended',    onVideoEnded);
 
       return () => {
         video.removeEventListener('canplay',  onCanPlay);
         video.removeEventListener('waiting',  onWaiting);
         video.removeEventListener('playing',  onPlaying);
+        video.removeEventListener('ended',    onVideoEnded);
       };
     }
 
@@ -120,6 +164,7 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0 }) => {
       if (ytPlayerRef.current) { ytPlayerRef.current.destroy(); ytPlayerRef.current = null; }
       if (controlTimer.current) clearTimeout(controlTimer.current);
       if (muteTimer.current)    clearTimeout(muteTimer.current);
+      if (interactionTimer.current) clearTimeout(interactionTimer.current);
     };
   }, [channel]);
 
@@ -193,6 +238,8 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0 }) => {
     setShowMute(true);
     if (muteTimer.current) clearTimeout(muteTimer.current);
     muteTimer.current = setTimeout(() => setShowMute(false), 3000);
+    
+    handleUserInteraction();
   };
 
   /* ── Progresso e Tempo ── */
@@ -257,6 +304,8 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0 }) => {
     <div 
       className={`hero-player-wrapper ${isFullscreen ? 'fullscreen-mode' : ''}`} 
       onClick={handlePlayerClick} 
+      onMouseMove={handleUserInteraction}
+      onTouchStart={handleUserInteraction}
       style={{ cursor: 'pointer' }}
       ref={playerWrapperRef}
     >
@@ -266,14 +315,14 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0 }) => {
           <div 
             style={{ 
               position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 
-              pointerEvents: 'auto', zIndex: 1 
+              pointerEvents: 'none', zIndex: 1 
             }}
           >
             <div id="yt-player-container" style={{ width: '100%', height: '100%', transform: 'scale(1.3)' }} />
           </div>
         </div>
       ) : (
-        <video ref={videoRef} muted={isMuted} autoPlay playsInline />
+        <video ref={videoRef} muted={isMuted} autoPlay playsInline style={{ pointerEvents: 'none' }} />
       )}
 
       {/* Thumbnail while loading */}
@@ -301,7 +350,7 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0 }) => {
 
       {/* Controls Overlay na base do vídeo */}
       <div 
-        className={`player-bottom-controls ${showMute || isPaused || showControl ? 'visible' : ''}`}
+        className={`player-bottom-controls ${showMute || isPaused || showControl || isInteracting ? 'visible' : ''}`}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="player-progress-container">

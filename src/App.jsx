@@ -80,7 +80,7 @@ export default function App() {
     }
   }, [channels]);
 
-  const categories = ['Destaque', 'Animes', 'Filmes', 'Músicas', 'Infantil', 'Amapiano'];
+  const categories = ['Destaque', 'Animes', 'Filmes', 'Músicas', 'Infantil', 'Amapiano', 'VEVO', 'Phonk'];
   const channelsInCategory = channels.filter(c => c.category === activeCategory);
 
   const handlePaymentSuccess = useCallback((plan) => {
@@ -92,6 +92,15 @@ export default function App() {
   const handleToggleMute = useCallback(() => {
     setIsMuted(prev => !prev);
   }, []);
+
+  const handleVideoEnded = useCallback(() => {
+    const currentIndex = channelsInCategory.findIndex(c => c.fbId === activeChannel?.fbId);
+    if (currentIndex !== -1 && currentIndex + 1 < channelsInCategory.length) {
+      handleChannelChange(channelsInCategory[currentIndex + 1]);
+    } else if (channelsInCategory.length > 0) {
+      handleChannelChange(channelsInCategory[0]);
+    }
+  }, [channelsInCategory, activeChannel, handleChannelChange]);
 
   return (
     <div className="app-container">
@@ -133,6 +142,7 @@ export default function App() {
                 isMuted={isMuted}
                 onToggleMute={handleToggleMute}
                 playlistIndex={playlistIndex}
+                onEnded={handleVideoEnded}
               />
 
               {activeChannel?.youtubeListId && (
@@ -156,7 +166,7 @@ export default function App() {
                 className="btn-toggle-playlist"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsDrawerOpen(!isDrawerOpen); }}
               >
-                ☰ {isDrawerOpen ? 'Fechar Lista' : 'Lista de Episódios'}
+                ☰ {isDrawerOpen ? 'Fechar Lista' : 'Lista'}
               </button>
             )}
           </div>
@@ -172,6 +182,7 @@ export default function App() {
               channels={channelsInCategory}
               activeChannel={activeChannel}
               onChannelChange={handleChannelChange}
+              activeCategory={activeCategory}
             />
           </div>
         </main>
