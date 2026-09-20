@@ -22,6 +22,7 @@ const ThumbnailRow = ({ channels, activeChannel, onChannelChange, activeCategory
       <div className="thumbnails-row">
         {visibleItems.map((item) => {
           const isActive = activeChannel?.fbId === item.fbId;
+          
           return (
             <div
               key={item.fbId}
@@ -54,6 +55,7 @@ const ThumbnailRow = ({ channels, activeChannel, onChannelChange, activeCategory
               <div className="thumbnail-overlay">
                 <div className="thumbnail-play">{isActive ? '▶ A TOCAR' : '▶'}</div>
               </div>
+
               {/* Optional text label on top of thumbnail for clarity */}
               <div style={{ position: 'absolute', bottom: 4, left: 8, color: '#fff', fontSize: '0.85rem', fontWeight: 'bold', textShadow: '0 1px 3px rgba(0,0,0,0.8)', zIndex: 3 }}>
                 {item.name}

@@ -125,7 +125,7 @@ export default function AdminShell({ children }) {
     <div className={`admin-root${dark ? '' : ' adm-light'}`}>
       <div className="adm-shell">
 
-        {/* ── SIDEBAR ── */}
+        {/* ── SIDEBAR (desktop) ── */}
         <aside className="adm-sidebar">
           {/* Logo */}
           <div className="adm-sidebar-logo">
@@ -186,6 +186,40 @@ export default function AdminShell({ children }) {
         {/* ── MAIN CONTENT ── */}
         <div className="adm-content">
 
+          {/* ── MOBILE TOPBAR ── */}
+          <div className="adm-mobile-topbar">
+            <div className="adm-mobile-logo"><span>M</span>YRO <span className="adm-mobile-admin-badge">Admin</span></div>
+            <div className="adm-mobile-topbar-right">
+              <button
+                className="adm-theme-toggle"
+                onClick={() => setDark(d => !d)}
+                title={dark ? 'Modo claro' : 'Modo escuro'}
+                aria-label="Alternar tema"
+              >
+                {dark ? (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <circle cx="12" cy="12" r="5"/>
+                    <line x1="12" y1="1" x2="12" y2="3"/>
+                    <line x1="12" y1="21" x2="12" y2="23"/>
+                    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+                    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+                    <line x1="1" y1="12" x2="3" y2="12"/>
+                    <line x1="21" y1="12" x2="23" y2="12"/>
+                    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+                    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+                  </svg>
+                ) : (
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+                    <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+                  </svg>
+                )}
+              </button>
+              <div className="adm-topbar-avatar" title="Admin">
+                {session.initials ?? 'JT'}
+              </div>
+            </div>
+          </div>
+
           {/* ── WELCOME BANNER ── */}
           <div className="adm-welcome-banner">
             <div className="adm-welcome-left">
@@ -195,7 +229,7 @@ export default function AdminShell({ children }) {
             <div className="adm-welcome-badge">MYRO Admin</div>
           </div>
 
-          {/* Top bar */}
+          {/* Top bar (desktop) */}
           <header className="adm-topbar">
             <div className="adm-topbar-left">
               <h1 className="adm-page-title">{info.title}</h1>
@@ -245,6 +279,32 @@ export default function AdminShell({ children }) {
         </div>
 
       </div>
+
+      {/* ── MOBILE BOTTOM NAV BAR ── */}
+      <nav className="adm-mobile-bottom-nav" aria-label="Navegação mobile do painel">
+        {NAV_ITEMS.map(item => (
+          <NavLink
+            key={item.to}
+            to={item.to}
+            end={item.end}
+            className={({ isActive }) =>
+              `adm-mobile-nav-item${isActive ? ' active' : ''}`
+            }
+          >
+            {item.icon}
+            <span className="adm-mobile-nav-label">{item.label.split(' ')[0]}</span>
+          </NavLink>
+        ))}
+        {/* Sair */}
+        <button className="adm-mobile-nav-item adm-mobile-nav-logout" onClick={handleLogout}>
+          <svg className="adm-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/>
+            <polyline points="16 17 21 12 16 7"/>
+            <line x1="21" y1="12" x2="9" y2="12"/>
+          </svg>
+          <span className="adm-mobile-nav-label">Sair</span>
+        </button>
+      </nav>
     </div>
   );
 }

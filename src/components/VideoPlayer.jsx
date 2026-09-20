@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, memo } from 'react';
 import Hls from 'hls.js';
 
-const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnded }) => {
+const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnded, isPremium, onOpenCheckout }) => {
   const videoRef        = useRef(null);
   const hlsRef          = useRef(null);
   const ytPlayerRef     = useRef(null);
@@ -15,6 +15,9 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnde
   const [isInteracting, setIsInteracting] = useState(false);
   const muteTimer       = useRef(null);
   const interactionTimer = useRef(null);
+
+  const [playTime,      setPlayTime]      = useState(0);
+  const [showPaywall,   setShowPaywall]   = useState(false);
 
   // Estados da Barra de Progresso
   const [progress,      setProgress]      = useState(0);
@@ -56,6 +59,8 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnde
     setIsLoading(true);
     setShowThumbnail(true);
     setIsPaused(false);
+    setPlayTime(0);
+    setShowPaywall(false);
 
     if (hlsRef.current) { hlsRef.current.destroy(); hlsRef.current = null; }
     if (ytPlayerRef.current) { ytPlayerRef.current.destroy(); ytPlayerRef.current = null; }
@@ -83,6 +88,7 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnde
               setTimeout(() => setShowThumbnail(false), 400);
             },
             onStateChange: (e) => {
+              handleUserInteraction(); // Sincroniza a UI ao interagir com o iframe
               if (e.data === window.YT.PlayerState.PLAYING) {
                 setIsLoading(false);
                 setIsPaused(false);
@@ -182,6 +188,29 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnde
       ytPlayerRef.current.playVideoAt(playlistIndex);
     }
   }, [playlistIndex, channel]);
+
+  /* ── Soft Paywall Logic ── */
+  useEffect(() => {
+    let interval;
+    if (!isPaused && !showPaywall && !isPremium && !isLoading) {
+      interval = setInterval(() => {
+        setPlayTime(prev => {
+          if (prev >= 30) {
+            setShowPaywall(true);
+            setIsPaused(true);
+            if (channel?.youtubeId && ytPlayerRef.current && typeof ytPlayerRef.current.pauseVideo === 'function') {
+              ytPlayerRef.current.pauseVideo();
+            } else if (videoRef.current) {
+              videoRef.current.pause();
+            }
+            return prev;
+          }
+          return prev + 1;
+        });
+      }, 1000);
+    }
+    return () => { if (interval) clearInterval(interval); };
+  }, [isPaused, showPaywall, isPremium, isLoading, channel]);
 
   /* ── Fullscreen ── */
   useEffect(() => {
@@ -310,19 +339,31 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnde
       ref={playerWrapperRef}
     >
       {/* Video */}
-      {channel.youtubeId ? (
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
-          <div 
-            style={{ 
-              position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 
-              pointerEvents: 'none', zIndex: 1 
-            }}
-          >
-            <div id="yt-player-container" style={{ width: '100%', height: '100%', transform: 'scale(1.3)' }} />
+      <div className={showPaywall ? 'paywall-blur' : ''} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', pointerEvents: showPaywall ? 'none' : 'auto' }}>
+        {channel.youtubeId ? (
+          <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', overflow: 'hidden' }}>
+            <div 
+              style={{ 
+                position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 
+                pointerEvents: 'auto', zIndex: 1 
+              }}
+            >
+              <div id="yt-player-container" style={{ width: '100%', height: '100%', transform: 'scale(1.3)' }} />
+            </div>
           </div>
+        ) : (
+          <video ref={videoRef} muted={isMuted} autoPlay playsInline style={{ pointerEvents: 'none' }} />
+        )}
+      </div>
+
+      {showPaywall && (
+        <div className="paywall-overlay">
+          <h2>Conteúdo Premium</h2>
+          <p>Estás a gostar? Subscreve para continuares a ver sem interrupções.</p>
+          <button className="btn-play" onClick={(e) => { e.stopPropagation(); onOpenCheckout(); }}>
+            Ver Planos
+          </button>
         </div>
-      ) : (
-        <video ref={videoRef} muted={isMuted} autoPlay playsInline style={{ pointerEvents: 'none' }} />
       )}
 
       {/* Thumbnail while loading */}

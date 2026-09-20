@@ -9,25 +9,37 @@ import CheckoutModal from './components/CheckoutModal';
 import TrialBanner from './components/TrialBanner';
 import PlaylistDrawer from './components/PlaylistDrawer';
 import SplashScreen from './components/SplashScreen';
-
+import ErrorBoundary from './components/ErrorBoundary';
+import UserProfileModal from './components/UserProfileModal';
 import { collection, onSnapshot } from 'firebase/firestore';
-import { db } from './firebase';
+import { onAuthStateChanged } from 'firebase/auth';
+import { db, auth } from './firebase';
 
 export default function App() {
   const [channels, setChannels] = useState([]);
   const [activeCategory, setActiveCategory] = useState('Destaque');
   const [activeChannel, setActiveChannel] = useState(null);
   const [isMuted,       setIsMuted]       = useState(true);
-  const [authModal,     setAuthModal]     = useState(false);
-  const [showCheckout,  setShowCheckout]  = useState(false);
-  const [playlistIndex, setPlaylistIndex] = useState(0);
-  const [isDrawerOpen,  setIsDrawerOpen]  = useState(false);
-  const [showSplash,    setShowSplash]    = useState(true);
+  const [authModal,      setAuthModal]      = useState(false);
+  const [showCheckout,   setShowCheckout]   = useState(false);
+  const [playlistIndex,  setPlaylistIndex]  = useState(0);
+  const [isDrawerOpen,   setIsDrawerOpen]   = useState(false);
+  const [showSplash,     setShowSplash]     = useState(true);
+  const [currentUser,    setCurrentUser]    = useState(null);
+  const [showProfile,    setShowProfile]    = useState(false);
 
   // Simulação do trial — quando o Firebase estiver integrado, este valor
   // virá da base de dados. null = sem trial activo, número = dias restantes.
   // Exemplo: troca para 1 ou 0 para ver o banner e o modal de bloqueio.
   const [trialDaysLeft] = useState(2);
+
+  // Ouvir o estado de autenticação do Firebase
+  useEffect(() => {
+    const unsubAuth = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+    });
+    return () => unsubAuth();
+  }, []);
 
   useEffect(() => {
     const unsub = onSnapshot(collection(db, 'channels'), (snapshot) => {
@@ -67,7 +79,8 @@ export default function App() {
     if (channel.fbId !== activeChannel?.fbId) {
       setActiveChannel(channel);
       setPlaylistIndex(0);
-      setIsDrawerOpen(!!channel.youtubeListId);
+      setIsDrawerOpen(false); // Não abrir a lista automaticamente
+      window.scrollTo({ top: 0, behavior: 'smooth' }); // Subir para o player
     }
   }, [activeChannel]);
 
@@ -103,103 +116,133 @@ export default function App() {
   }, [channelsInCategory, activeChannel, handleChannelChange]);
 
   return (
-    <div className="app-container">
-      {/* Splash Screen — aparece na primeira abertura */}
-      {showSplash && (
-        <SplashScreen onFinish={() => setShowSplash(false)} />
-      )}
+    <ErrorBoundary>
+      <div className="app-container">
+        {/* Splash Screen — aparece na primeira abertura */}
+        {showSplash && (
+          <SplashScreen onFinish={() => setShowSplash(false)} />
+        )}
 
-      <Header onAuthOpen={() => setAuthModal(true)} />
-
-      {/* Auth Modal */}
-      {authModal && (
-        <AuthModal onClose={() => setAuthModal(false)} />
-      )}
-
-      {/* Checkout Modal */}
-      {showCheckout && (
-        <CheckoutModal
-          onClose={() => setShowCheckout(false)}
-          onSuccess={handlePaymentSuccess}
+        <Header
+          onAuthOpen={() => setAuthModal(true)}
+          currentUser={currentUser}
+          onOpenProfile={() => setShowProfile(true)}
         />
-      )}
+
+        {/* Auth Modal */}
+        {authModal && (
+          <AuthModal onClose={() => setAuthModal(false)} />
+        )}
+
+        {/* User Profile Modal */}
+        {showProfile && currentUser && (
+          <UserProfileModal
+            user={currentUser}
+            trialDaysLeft={trialDaysLeft}
+            onClose={() => setShowProfile(false)}
+            onOpenCheckout={() => setShowCheckout(true)}
+          />
+        )}
+
+        {/* Checkout Modal */}
+        {showCheckout && (
+          <CheckoutModal
+            onClose={() => setShowCheckout(false)}
+            onSuccess={handlePaymentSuccess}
+          />
+        )}
 
 
 
-      {/* Banner de aviso de trial — aparece nos últimos 5 dias */}
-      {/* <TrialBanner
-        daysLeft={trialDaysLeft}
-        onUpgrade={() => setShowCheckout(true)}
-      /> */}
+        {/* Banner de aviso de trial — aparece nos últimos 5 dias */}
+        {/* <TrialBanner
+          daysLeft={trialDaysLeft}
+          onUpgrade={() => setShowCheckout(true)}
+        /> */}
 
-      {/* Only render content if channels are loaded */}
-      {channels.length > 0 && activeChannel ? (
-        <main className="main-content">
-          <div className="hero-section">
-            <div className="player-wrapper" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-              <VideoPlayer 
-                channel={activeChannel}
-                isMuted={isMuted}
-                onToggleMute={handleToggleMute}
-                playlistIndex={playlistIndex}
-                onEnded={handleVideoEnded}
-              />
+        {/* Only render content if channels are loaded */}
+        {channels.length > 0 && activeChannel ? (
+          <main className="main-content">
+            <div className="hero-section">
+              <div className="player-wrapper" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
+                <VideoPlayer 
+                  channel={activeChannel}
+                  isMuted={isMuted}
+                  onToggleMute={handleToggleMute}
+                  playlistIndex={playlistIndex}
+                  onEnded={handleVideoEnded}
+                  isPremium={trialDaysLeft > 0}
+                  onOpenCheckout={() => setShowCheckout(true)}
+                />
+
+                {activeChannel?.youtubeListId && (
+                  <PlaylistDrawer
+                    playlistId={activeChannel?.youtubeListId}
+                    isOpen={isDrawerOpen}
+                    onClose={() => setIsDrawerOpen(false)}
+                    currentIndex={playlistIndex}
+                    onSelect={(idx) => {
+                      setPlaylistIndex(idx);
+                      if (window.innerWidth <= 900) {
+                        setIsDrawerOpen(false);
+                      }
+                    }}
+                  />
+                )}
+              </div>
 
               {activeChannel?.youtubeListId && (
-                <PlaylistDrawer
-                  playlistId={activeChannel?.youtubeListId}
-                  isOpen={isDrawerOpen}
-                  onClose={() => setIsDrawerOpen(false)}
-                  currentIndex={playlistIndex}
-                  onSelect={(idx) => {
-                    setPlaylistIndex(idx);
-                    if (window.innerWidth <= 900) {
-                      setIsDrawerOpen(false);
-                    }
-                  }}
-                />
+                <button 
+                  className="btn-toggle-playlist"
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsDrawerOpen(!isDrawerOpen); }}
+                >
+                  ☰ {isDrawerOpen ? 'Fechar Lista' : 'Lista'}
+                </button>
               )}
             </div>
 
-            {activeChannel?.youtubeListId && (
-              <button 
-                className="btn-toggle-playlist"
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setIsDrawerOpen(!isDrawerOpen); }}
-              >
-                ☰ {isDrawerOpen ? 'Fechar Lista' : 'Lista'}
-              </button>
-            )}
-          </div>
+            <div className="content-container">
+              <ChannelSelector 
+                categories={categories}
+                activeCategory={activeCategory}
+                onCategoryChange={handleCategoryChange}
+              />
 
-          <div className="content-container">
-            <ChannelSelector 
-              categories={categories}
-              activeCategory={activeCategory}
-              onCategoryChange={handleCategoryChange}
-            />
+              <ThumbnailRow 
+                channels={channelsInCategory}
+                activeChannel={activeChannel}
+                onChannelChange={handleChannelChange}
+                activeCategory={activeCategory}
+              />
+            </div>
+          </main>
+        ) : (
+          <main className="main-content">
+            <div className="hero-section">
+              <div className="skeleton-hero"></div>
+            </div>
+            <div className="content-container" style={{ padding: '20px 56px' }}>
+              <section className="thumbnails-section">
+                <div style={{ width: '250px', height: '28px', backgroundColor: '#2a2a2a', borderRadius: '4px', marginBottom: '16px', position: 'relative', overflow: 'hidden' }} className="skeleton-shimmer"></div>
+                <div className="skeleton-row">
+                  {[...Array(5)].map((_, i) => (
+                    <div key={i} className="skeleton-card"></div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </main>
+        )}
 
-            <ThumbnailRow 
-              channels={channelsInCategory}
-              activeChannel={activeChannel}
-              onChannelChange={handleChannelChange}
-              activeCategory={activeCategory}
-            />
-          </div>
-        </main>
-      ) : (
-        <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh', color: '#fff' }}>
-          A carregar canais...
-        </div>
-      )}
-
-      <footer className="footer" id="sobre">
-        <p className="footer-text">© 2025 MYRO · Entretenimento ao vivo em português · Moçambique</p>
-        <nav className="footer-links" aria-label="Links do rodapé">
-          <a href="#" id="footer-termos">Termos de Uso</a>
-          <a href="#" id="footer-privacidade">Privacidade</a>
-          <a href="#" id="footer-contacto">Contacto</a>
-        </nav>
-      </footer>
-    </div>
+        <footer className="footer" id="sobre">
+          <p className="footer-text">© 2025 MYRO · Entretenimento ao vivo em português · Moçambique</p>
+          <nav className="footer-links" aria-label="Links do rodapé">
+            <a href="#" id="footer-termos">Termos de Uso</a>
+            <a href="#" id="footer-privacidade">Privacidade</a>
+            <a href="#" id="footer-contacto">Contacto</a>
+          </nav>
+        </footer>
+      </div>
+    </ErrorBoundary>
   );
 }
