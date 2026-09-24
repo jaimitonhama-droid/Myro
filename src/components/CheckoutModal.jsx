@@ -4,7 +4,7 @@ const PLANS = [
   {
     id: 'daily',
     name: 'Diário',
-    price: 10,
+    price: 5,
     days: 1,
     tag: null,
     desc: '24 horas de acesso',
@@ -12,18 +12,18 @@ const PLANS = [
   {
     id: 'weekly',
     name: 'Semanal',
-    price: 50,
+    price: 45,
     days: 7,
-    tag: '⭐ Popular',
+    tag: 'Popular',
     desc: '7 dias de acesso',
     highlight: true,
   },
   {
     id: 'monthly',
     name: 'Mensal',
-    price: 210,
+    price: 350,
     days: 30,
-    tag: '💎 Melhor Valor',
+    tag: 'Melhor Valor',
     desc: '30 dias de acesso',
   },
 ];
@@ -48,7 +48,7 @@ export default function CheckoutModal({ onClose, onSuccess }) {
     return /^(84|85)\d{7}$/.test(clean);
   };
 
-  const handlePay = (e) => {
+  const handlePay = async (e) => {
     e.preventDefault();
     setError('');
     if (!validatePhone(phone)) {
@@ -56,10 +56,36 @@ export default function CheckoutModal({ onClose, onSuccess }) {
       return;
     }
     setStep('waiting');
-    // Simula confirmação após 3s — aqui irás ligar à tua API de pagamento
-    setTimeout(() => {
-      onSuccess && onSuccess(selectedPlan);
-    }, 3000);
+    
+    try {
+      const response = await fetch('/api/payment', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone: `258${phone}`, // Formato de Moçambique: 25884...
+          amount: selectedPlan.price,
+          planId: selectedPlan.id
+        })
+      });
+
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Erro ao iniciar pagamento');
+      }
+
+      // O pedido ao ZumboPay foi bem-sucedido e o prompt M-Pesa foi enviado!
+      // O webhook tratará de activar o plano no Firebase futuramente.
+      // Por agora, fechamos e simulamos o sucesso local para efeitos de UI:
+      setTimeout(() => {
+        onSuccess && onSuccess(selectedPlan);
+      }, 5000);
+      
+    } catch (err) {
+      console.error(err);
+      setError(err.message);
+      setStep('payment'); // Volta ao passo anterior para tentar novamente
+    }
   };
 
   const formatPhone = (val) => {
@@ -108,7 +134,7 @@ export default function CheckoutModal({ onClose, onSuccess }) {
             </div>
 
             <p className="checkout-note">
-              🔒 Pagamento seguro via M-Pesa
+              Pagamento seguro via M-Pesa
             </p>
           </>
         )}
@@ -128,7 +154,7 @@ export default function CheckoutModal({ onClose, onSuccess }) {
               <div className="auth-field">
                 <label htmlFor="mpesa-number">Número M-Pesa</label>
                 <div className="auth-input-wrap mpesa-wrap">
-                  <span className="mpesa-prefix">🇲🇿 +258</span>
+                  <span className="mpesa-prefix">+258</span>
                   <input
                     id="mpesa-number"
                     type="tel"
@@ -149,8 +175,8 @@ export default function CheckoutModal({ onClose, onSuccess }) {
                 <span className="checkout-summary-price">{selectedPlan.price} MT</span>
               </div>
 
-              <button id="btn-pay-mpesa" type="submit" className="btn-auth-submit btn-mpesa">
-                💳 Pagar {selectedPlan.price} MT via M-Pesa
+              <button id="btn-pay-mpesa" type="submit" className={`btn-auth-submit btn-mpesa ${phone.length === 9 ? 'ready' : ''}`}>
+                Pagar {selectedPlan.price} MT via M-Pesa
               </button>
             </form>
 

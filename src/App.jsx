@@ -6,7 +6,7 @@ import ChannelSelector from './components/ChannelSelector';
 import ThumbnailRow from './components/ThumbnailRow';
 import AuthModal from './components/AuthModal';
 import CheckoutModal from './components/CheckoutModal';
-import TrialBanner from './components/TrialBanner';
+
 import PlaylistDrawer from './components/PlaylistDrawer';
 import SplashScreen from './components/SplashScreen';
 import ErrorBoundary from './components/ErrorBoundary';
@@ -27,6 +27,7 @@ export default function App() {
   const [showSplash,     setShowSplash]     = useState(true);
   const [currentUser,    setCurrentUser]    = useState(null);
   const [showProfile,    setShowProfile]    = useState(false);
+  const [showTrailer,    setShowTrailer]    = useState(true);
 
   // Simulação do trial — quando o Firebase estiver integrado, este valor
   // virá da base de dados. null = sem trial activo, número = dias restantes.
@@ -76,6 +77,7 @@ export default function App() {
   }, []);
 
   const handleChannelChange = useCallback((channel) => {
+    setShowTrailer(false);
     if (channel.fbId !== activeChannel?.fbId) {
       setActiveChannel(channel);
       setPlaylistIndex(0);
@@ -127,6 +129,7 @@ export default function App() {
           onAuthOpen={() => setAuthModal(true)}
           currentUser={currentUser}
           onOpenProfile={() => setShowProfile(true)}
+          onOpenCheckout={() => setShowCheckout(true)}
         />
 
         {/* Auth Modal */}
@@ -154,26 +157,34 @@ export default function App() {
 
 
 
-        {/* Banner de aviso de trial — aparece nos últimos 5 dias */}
-        {/* <TrialBanner
-          daysLeft={trialDaysLeft}
-          onUpgrade={() => setShowCheckout(true)}
-        /> */}
+        {/* Banner de aviso de trial foi removido - agora é um botão no Header */}
 
         {/* Only render content if channels are loaded */}
         {channels.length > 0 && activeChannel ? (
           <main className="main-content">
             <div className="hero-section">
-              <div className="player-wrapper" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden' }}>
-                <VideoPlayer 
-                  channel={activeChannel}
-                  isMuted={isMuted}
-                  onToggleMute={handleToggleMute}
-                  playlistIndex={playlistIndex}
-                  onEnded={handleVideoEnded}
-                  isPremium={trialDaysLeft > 0}
-                  onOpenCheckout={() => setShowCheckout(true)}
-                />
+              <div className="player-wrapper" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'hidden', backgroundColor: '#000' }}>
+                {showTrailer ? (
+                  <div className="trailer-wrapper">
+                    <video
+                      src="/logo-trailer.mp4"
+                      autoPlay
+                      muted
+                      playsInline
+                      style={{ maxWidth: '100%', height: '100%', objectFit: 'contain' }}
+                    />
+                  </div>
+                ) : (
+                  <VideoPlayer 
+                    channel={activeChannel}
+                    isMuted={isMuted}
+                    onToggleMute={handleToggleMute}
+                    playlistIndex={playlistIndex}
+                    onEnded={handleVideoEnded}
+                    isPremium={trialDaysLeft > 0}
+                    onOpenCheckout={() => setShowCheckout(true)}
+                  />
+                )}
 
                 {activeChannel?.youtubeListId && (
                   <PlaylistDrawer

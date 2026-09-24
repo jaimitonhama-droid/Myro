@@ -345,7 +345,7 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnde
             <div 
               style={{ 
                 position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', 
-                pointerEvents: 'auto', zIndex: 1 
+                pointerEvents: 'none', zIndex: 1 
               }}
             >
               <div id="yt-player-container" style={{ width: '100%', height: '100%', transform: 'scale(1.3)' }} />
