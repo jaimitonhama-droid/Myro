@@ -8,7 +8,7 @@ import AuthModal from './components/AuthModal';
 import CheckoutModal from './components/CheckoutModal';
 
 import PlaylistDrawer from './components/PlaylistDrawer';
-import SplashScreen from './components/SplashScreen';
+
 import ErrorBoundary from './components/ErrorBoundary';
 import UserProfileModal from './components/UserProfileModal';
 import { collection, onSnapshot } from 'firebase/firestore';
@@ -24,7 +24,7 @@ export default function App() {
   const [showCheckout,   setShowCheckout]   = useState(false);
   const [playlistIndex,  setPlaylistIndex]  = useState(0);
   const [isDrawerOpen,   setIsDrawerOpen]   = useState(false);
-  const [showSplash,     setShowSplash]     = useState(true);
+
   const [currentUser,    setCurrentUser]    = useState(null);
   const [showProfile,    setShowProfile]    = useState(false);
   const [showTrailer,    setShowTrailer]    = useState(true);
@@ -117,13 +117,28 @@ export default function App() {
     }
   }, [channelsInCategory, activeChannel, handleChannelChange]);
 
+  const handleNextChannel = useCallback(() => {
+    const currentIndex = channelsInCategory.findIndex(c => c.fbId === activeChannel?.fbId);
+    if (currentIndex !== -1 && currentIndex + 1 < channelsInCategory.length) {
+      handleChannelChange(channelsInCategory[currentIndex + 1]);
+    } else if (channelsInCategory.length > 0) {
+      handleChannelChange(channelsInCategory[0]);
+    }
+  }, [channelsInCategory, activeChannel, handleChannelChange]);
+
+  const handlePrevChannel = useCallback(() => {
+    const currentIndex = channelsInCategory.findIndex(c => c.fbId === activeChannel?.fbId);
+    if (currentIndex > 0) {
+      handleChannelChange(channelsInCategory[currentIndex - 1]);
+    } else if (channelsInCategory.length > 0) {
+      handleChannelChange(channelsInCategory[channelsInCategory.length - 1]);
+    }
+  }, [channelsInCategory, activeChannel, handleChannelChange]);
+
   return (
     <ErrorBoundary>
       <div className="app-container">
-        {/* Splash Screen — aparece na primeira abertura */}
-        {showSplash && (
-          <SplashScreen onFinish={() => setShowSplash(false)} />
-        )}
+
 
         <Header
           onAuthOpen={() => setAuthModal(true)}
@@ -183,6 +198,8 @@ export default function App() {
                     onEnded={handleVideoEnded}
                     isPremium={trialDaysLeft > 0}
                     onOpenCheckout={() => setShowCheckout(true)}
+                    onPrev={handlePrevChannel}
+                    onNext={handleNextChannel}
                   />
                 )}
 

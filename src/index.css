@@ -815,36 +815,50 @@ body {
    CENTER PLAY/PAUSE CONTROL
    Aparece ao clicar no vídeo, some suavemente
    =========================== */
-.player-center-control {
+/* Overlay central com botoes prev/play/next */
+.player-center-overlay {
   position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%) scale(0.75);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: 20px;
   opacity: 0;
   pointer-events: none;
-  transition: opacity 0.15s ease, transform 0.15s ease;
+  transition: opacity 0.2s ease;
 }
-.player-center-control.visible {
+.player-center-overlay.visible {
   opacity: 1;
-  transform: translate(-50%, -50%) scale(1);
-  animation: control-flash 1.2s forwards;
+  pointer-events: auto;
 }
-@keyframes control-flash {
-  0%   { opacity: 0; transform: translate(-50%, -50%) scale(0.75); }
-  15%  { opacity: 1; transform: translate(-50%, -50%) scale(1.08); }
-  30%  { transform: translate(-50%, -50%) scale(1); }
-  70%  { opacity: 1; }
-  100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
-}
-.player-center-icon {
-  font-size: 52px;
+
+/* Botoes do overlay central */
+.btn-overlay-ctrl {
+  background: rgba(0, 0, 0, 0.5);
+  border: none;
+  border-radius: 50%;
+  width: 52px;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
   color: #fff;
-  line-height: 1;
-  text-shadow:
-    0 2px 16px rgba(0, 0, 0, 0.8),
-    0 0px 40px rgba(0, 0, 0, 0.5);
-  user-select: none;
+  backdrop-filter: blur(6px);
+  transition: background 0.2s, transform 0.15s;
+  flex-shrink: 0;
 }
+.btn-overlay-ctrl svg {
+  width: 26px;
+  height: 26px;
+}
+.btn-overlay-ctrl:hover {
+  background: rgba(255, 255, 255, 0.2);
+  transform: scale(1.1);
+}
+
 
 /* ===========================
    CHANNEL SELECTOR
@@ -1699,9 +1713,65 @@ body {
 }
 .player-controls-row {
   display: flex;
-  justify-content: flex-end;
+  justify-content: space-between;
+  align-items: center;
   width: 100%;
 }
+.player-controls-left,
+.player-controls-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+.player-controls-right {
+  justify-content: flex-end;
+}
+.player-controls-center {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+  flex: 1;
+}
+
+/* Botões de controlo do player */
+.btn-player-ctrl {
+  background: rgba(255,255,255,0.1);
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.2s, transform 0.15s;
+  backdrop-filter: blur(4px);
+  flex-shrink: 0;
+}
+.btn-player-ctrl svg {
+  width: 20px;
+  height: 20px;
+}
+.btn-player-ctrl:hover {
+  background: rgba(255,255,255,0.25);
+  transform: scale(1.1);
+}
+.btn-player-playpause {
+  width: 52px;
+  height: 52px;
+  background: rgba(220,38,38,0.85);
+}
+.btn-player-playpause svg {
+  width: 26px;
+  height: 26px;
+}
+.btn-player-playpause:hover {
+  background: rgba(220,38,38,1);
+}
+
 
 @media (max-width: 900px) {
   .btn-toggle-playlist {
