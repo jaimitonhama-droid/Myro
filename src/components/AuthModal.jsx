@@ -34,7 +34,8 @@ export default function AuthModal({ onClose }) {
       
       const user = userCredential.user;
 
-      // Se for o administrador, redireciona para o painel
+      // Se for o administrador, guarda a sessão mas NÃO redireciona automaticamente.
+      // O admin verá o painel do utilizador normal, com a aba "Painel Admin" exclusiva na sidebar.
       if (user.email === 'jaimitonhama@gmail.com') {
         sessionStorage.setItem('myro_admin', JSON.stringify({
           uid: user.uid,
@@ -42,12 +43,9 @@ export default function AuthModal({ onClose }) {
           initials: user.email.substring(0, 2).toUpperCase(),
           loginAt: new Date().toISOString(),
         }));
-        onClose();
-        navigate('/admin');
-      } else {
-        alert(screen === 'signup' ? `Conta criada para ${name}!` : `Bem-vindo de volta!`);
-        onClose();
       }
+
+      onClose();
     } catch (err) {
       console.error(err);
       if (err.code === 'auth/email-already-in-use') {

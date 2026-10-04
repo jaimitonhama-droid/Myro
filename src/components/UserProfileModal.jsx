@@ -55,6 +55,21 @@ function getGreeting() {
 export default function UserProfileModal({ user, trialDaysLeft, onClose, onOpenCheckout }) {
   const [activeSection, setActiveSection] = useState('plan');
   const [loggingOut, setLoggingOut] = useState(false);
+  const [favorites, setFavorites] = useState([]);
+
+  useEffect(() => {
+    const loadFavs = () => setFavorites(JSON.parse(localStorage.getItem('myro_favorites') || '[]'));
+    loadFavs();
+    window.addEventListener('myro_favorites_updated', loadFavs);
+    return () => window.removeEventListener('myro_favorites_updated', loadFavs);
+  }, []);
+
+  const removeFavorite = (id) => {
+    const newFavs = favorites.filter(f => f.fbId !== id);
+    setFavorites(newFavs);
+    localStorage.setItem('myro_favorites', JSON.stringify(newFavs));
+    window.dispatchEvent(new Event('myro_favorites_updated'));
+  };
 
   const handleBackdrop = (e) => {
     if (e.target === e.currentTarget) onClose();
@@ -114,6 +129,15 @@ export default function UserProfileModal({ user, trialDaysLeft, onClose, onOpenC
                 {item.label}
               </button>
             ))}
+            
+            {email === 'jaimitonhama@gmail.com' && (
+              <a href="/admin" className="upm-nav-item" style={{ color: 'var(--myro-red)' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" width="18" height="18">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                </svg>
+                Painel Admin
+              </a>
+            )}
           </nav>
 
           {/* Logout */}
@@ -223,11 +247,39 @@ export default function UserProfileModal({ user, trialDaysLeft, onClose, onOpenC
           {/* ── PAGE: A MINHA LISTA ── */}
           {activeSection === 'favorites' && (
             <main className="upm-page">
-              <div className="upm-card upm-empty-card">
-                <div className="upm-empty-icon">♡</div>
-                <h3 className="upm-empty-title">A tua lista está vazia</h3>
-                <p className="upm-empty-desc">Ainda não adicionaste nenhum canal aos favoritos. Em breve poderás guardar os teus conteúdos preferidos aqui.</p>
-              </div>
+              {favorites.length === 0 ? (
+                <div className="upm-card upm-empty-card">
+                  <div className="upm-empty-icon">♡</div>
+                  <h3 className="upm-empty-title">A tua lista está vazia</h3>
+                  <p className="upm-empty-desc">Ainda não adicionaste nenhum vídeo aos favoritos. Clica no ícone de ♥ no ecrã de vídeo para guardar os teus conteúdos preferidos.</p>
+                </div>
+              ) : (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: '16px' }}>
+                  {favorites.map(fav => (
+                    <div key={fav.fbId} style={{ position: 'relative', borderRadius: '10px', overflow: 'hidden', backgroundColor: 'var(--bg-card)' }}>
+                      <div style={{ position: 'relative', width: '100%', paddingTop: '56.25%' }}>
+                        <img 
+                          src={fav.thumbnail} 
+                          alt={fav.name} 
+                          style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', objectFit: 'cover' }} 
+                        />
+                      </div>
+                      <div style={{ padding: '12px', fontSize: '13px', fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {fav.name}
+                      </div>
+                      <button 
+                        onClick={() => removeFavorite(fav.fbId)}
+                        title="Remover"
+                        style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(0,0,0,0.7)', border: 'none', color: '#fff', padding: '6px', borderRadius: '50%', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                      >
+                        <svg viewBox="0 0 24 24" width="14" height="14" stroke="currentColor" strokeWidth="2" fill="none">
+                          <path d="M18 6L6 18M6 6l12 12" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </main>
           )}
 

@@ -3,7 +3,7 @@ import { collection, doc, onSnapshot, addDoc, updateDoc, deleteDoc } from 'fireb
 import { db } from '../../firebase';
 
 const YOUTUBE_API_KEY = "AIzaSyDe4IDUOcPHE7v3Q2-TCnOdaf9iYiXSsXA";
-const EMPTY_FORM = { name: '', emoji: '📺', category: 'Animes', url: '', youtubeId: '', thumbnail: '', description: '', duration: '' };
+const EMPTY_FORM = { name: '', emoji: '📺', category: 'Novelas', url: '', youtubeId: '', thumbnail: '', description: '', duration: '' };
 
 export default function ChannelsPage() {
   const [channels, setChannels] = useState([]);

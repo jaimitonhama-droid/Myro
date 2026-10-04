@@ -8,6 +8,7 @@ import ChannelsPage from './pages/ChannelsPage';
 import PaymentsPage from './pages/PaymentsPage';
 import AnalyticsPage from './pages/AnalyticsPage';
 import SettingsPage from './pages/SettingsPage';
+import ImportPage  from './pages/ImportPage';
 
 export default function AdminApp() {
   return (
@@ -27,6 +28,7 @@ export default function AdminApp() {
                 <Route path="channels"  element={<ChannelsPage />} />
                 <Route path="payments"  element={<PaymentsPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
+                <Route path="import"    element={<ImportPage />} />
                 <Route path="settings"  element={<SettingsPage />} />
                 {/* Fallback para rota desconhecida dentro do admin */}
                 <Route path="*" element={<Navigate to="/admin" replace />} />

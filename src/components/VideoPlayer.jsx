@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState, memo } from 'react';
 import Hls from 'hls.js';
+import { doc, deleteDoc } from 'firebase/firestore';
+import { db } from '../firebase';
 
 const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnded, isPremium, onOpenCheckout, onPrev, onNext }) => {
   const videoRef        = useRef(null);
@@ -29,6 +31,29 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnde
   
   const playerWrapperRef = useRef(null);
   const lastReportTime   = useRef(0);
+
+  // ── FAVORITES ──
+  const [isFavorite, setIsFavorite] = useState(false);
+  useEffect(() => {
+    if (channel?.fbId) {
+      const favs = JSON.parse(localStorage.getItem('myro_favorites') || '[]');
+      setIsFavorite(favs.some(f => f.fbId === channel.fbId));
+    }
+  }, [channel]);
+
+  const toggleFavorite = (e) => {
+    e.stopPropagation();
+    if (!channel) return;
+    let favs = JSON.parse(localStorage.getItem('myro_favorites') || '[]');
+    if (isFavorite) {
+      favs = favs.filter(f => f.fbId !== channel.fbId);
+    } else {
+      favs.push(channel);
+    }
+    localStorage.setItem('myro_favorites', JSON.stringify(favs));
+    setIsFavorite(!isFavorite);
+    window.dispatchEvent(new Event('myro_favorites_updated'));
+  };
 
   const reportErrorToAdmin = (errorType, errorCode) => {
     const now = Date.now();
@@ -101,10 +126,19 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnde
                 if (onEnded) onEnded();
               }
             },
-            onError: (e) => {
+            onError: async (e) => {
               // 100: Removido/Privado | 101/150: Bloqueado por direitos autorais para sites externos
               if (e.data === 100 || e.data === 101 || e.data === 150) {
-                reportErrorToAdmin("YouTube Bloqueado/Removido", e.data);
+                console.warn(`[Auto-Limpeza] Vídeo indisponível (Erro ${e.data}). A eliminar permanentemente da base de dados...`);
+                try {
+                  if (channel?.fbId) {
+                    await deleteDoc(doc(db, 'channels', channel.fbId));
+                    console.log(`[Auto-Limpeza] Vídeo '${channel.name}' eliminado com sucesso.`);
+                  }
+                } catch (err) {
+                  console.error("[Auto-Limpeza] Erro ao tentar eliminar vídeo:", err);
+                }
+                reportErrorToAdmin("Vídeo auto-eliminado", e.data);
                 if (onEnded) onEnded();
               }
             }
@@ -480,6 +514,17 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnde
                   <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3A4.5 4.5 0 0 0 14 7.97v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
                 </svg>
               )}
+            </button>
+            <button
+              className={`btn-player-ctrl ${isFavorite ? 'favorite-active' : ''}`}
+              onClick={toggleFavorite}
+              aria-label={isFavorite ? 'Remover da Lista' : 'Adicionar à Lista'}
+              title={isFavorite ? 'Remover da Lista' : 'Adicionar à Lista'}
+              style={{ color: isFavorite ? 'var(--myro-red)' : 'inherit', marginLeft: 12 }}
+            >
+              <svg viewBox="0 0 24 24" fill={isFavorite ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" aria-hidden="true" width="20" height="20">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+              </svg>
             </button>
           </div>
 

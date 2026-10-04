@@ -52,6 +52,17 @@ const NAV_ITEMS = [
     ),
   },
   {
+    to: '/admin/import',
+    label: 'Importador',
+    icon: (
+      <svg className="adm-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+        <polyline points="17 8 12 3 7 8"/>
+        <line x1="12" y1="3" x2="12" y2="15"/>
+      </svg>
+    ),
+  },
+  {
     to: '/admin/analytics',
     label: 'Analytics',
     icon: (
@@ -97,6 +108,7 @@ const PAGE_LABELS = {
   '/admin/users':     { title: 'Utilizadores', sub: 'Gestão de clientes' },
   '/admin/channels':  { title: 'Canais',        sub: 'Gestão de emissões ao vivo' },
   '/admin/payments':  { title: 'Pagamentos',    sub: 'Histórico M-Pesa' },
+  '/admin/import':    { title: 'Importador',    sub: 'Adicionar vídeos do YouTube' },
   '/admin/analytics': { title: 'Analytics',     sub: 'Relatórios e métricas' },
   '/admin/settings':  { title: 'Definições',    sub: 'Configuração do sistema' },
 };
