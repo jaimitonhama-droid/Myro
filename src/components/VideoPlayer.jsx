@@ -394,8 +394,6 @@ const VideoPlayer = ({ channel, isMuted, onToggleMute, playlistIndex = 0, onEnde
                 zIndex: 3, background: 'transparent', cursor: 'pointer'
               }}
               onClick={(e) => { e.stopPropagation(); handlePlayerClick(); }}
-              onMouseEnter={() => setIsHovering(true)}
-              onMouseLeave={() => setIsHovering(false)}
               onMouseMove={handleUserInteraction}
             />
           </div>

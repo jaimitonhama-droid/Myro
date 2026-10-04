@@ -33,6 +33,11 @@ Este ficheiro guarda a memória de todo o trabalho e das funcionalidades que já
 - **Como funciona:** A cada 10 minutos (baseado num relógio global determinístico), os vídeos dentro de cada categoria são trocados de lugar aleatoriamente.
 - **Regra de Ouro:** Os Animes nunca se misturam com os Filmes. A mistura acontece *apenas* de forma interna e organizada dentro da própria categoria do vídeo.
 
+### 7. Correções UI/UX (Botões & Menus)
+- **O que fizemos:** Ajustámos pormenores cruciais da experiência do utilizador.
+- **Menu Mobile:** Adicionámos o botão exclusivo "Admin" no menu de navegação inferior dos telemóveis (em `UserProfileModal.jsx`), garantindo que o administrador consiga gerir a plataforma em qualquer lado.
+- **Flicker do Player:** Corrigimos o "hover loop" no `VideoPlayer.jsx` que fazia os botões centrais (Pausa/Avançar) piscarem ininterruptamente. Isto foi resolvido corrigindo a gestão de eventos do rato na camada invisível do YouTube.
+
 ---
 
 **Nota para a próxima sessão:** O projeto já tem a espinha dorsal de conteúdos perfeitamente montada, bem como o sistema de contas, importação e consumo de vídeos. Os próximos passos podem incluir integração de pagamentos reais, melhorias de SEO, ou a aba de histórico.
