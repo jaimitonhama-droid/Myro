@@ -35,17 +35,30 @@ const ThumbnailRow = ({ channels, activeChannel, onChannelChange, activeCategory
               style={{ border: isActive ? `2px solid ${item.accentColor || '#e50914'}` : '2px solid transparent' }}
             >
               { item.isOffline && <span className="thumbnail-offline">OFFLINE</span> }
-              { item.youtubeId && !item.youtubeListId ? (
-                <img 
-                  src={`https://img.youtube.com/vi/${item.youtubeId}/hqdefault.jpg`} 
-                  alt={item.name} 
-                  loading="lazy"
-                />
-              ) : item.thumbnail ? (
+              { item.thumbnail ? (
                 <img 
                   src={item.thumbnail} 
                   alt={item.name} 
                   loading="lazy"
+                  onError={(e) => {
+                    if (item.youtubeId && !e.currentTarget.dataset.triedYt) {
+                      e.currentTarget.dataset.triedYt = 'true';
+                      e.currentTarget.src = `https://img.youtube.com/vi/${item.youtubeId}/hqdefault.jpg`;
+                    } else {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.src = '/myro-logo.png';
+                    }
+                  }}
+                />
+              ) : item.youtubeId ? (
+                <img 
+                  src={`https://img.youtube.com/vi/${item.youtubeId}/hqdefault.jpg`} 
+                  alt={item.name} 
+                  loading="lazy"
+                  onError={(e) => {
+                    e.currentTarget.onerror = null;
+                    e.currentTarget.src = '/myro-logo.png';
+                  }}
                 />
               ) : (
                 <div className="thumbnail-placeholder">MYRO</div>
